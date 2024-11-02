@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "dist/main",
+    "emitDeclarationOnly": true,
+    "outDir": "dist/main",
+    "rootDir": "src",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["src/types"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}
