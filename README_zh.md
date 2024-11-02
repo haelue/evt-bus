@@ -1,44 +1,44 @@
-language: **| [English](README.md) | [中文](README_zh.md) |**
+语言: **| [English](README.md) | [中文](README_zh.md) |**
 
 # Evt-Bus
 
-> An event bus framework with powerful features:
+> 一个 超强大的 事件总线 工具, 包含如下特性:
 
-- **Type inferring:** support typescript, you can use the event bus like calling functions with type inferring
-- **Async emitter:** define async handler, and emit it using Promise OR async-await
-- **Propagation stop:** stop event propagation in handler-loop
-- **Handler sorting:** sort the handlers with order-index
-- **Handler group off:** subscribe events with group-id, and unsubscribe them by group
+- **类型推断:** 支持 typescript, 你可以在类型推断的支持下, 像调用方法一样使用事件
+- **异步事件:** 支持异步回调, 通过 Promise 或 async-await 的方式发送事件
+- **冒泡终止:** 你可以终止事件冒泡循环
+- **响应排序:** 指定一个 order 值来对事件响应进行排序
+- **按组取消监听:** 指定一个 group-id 值, 并在取消监听时按组取消
 
-## Table of Contents
+## 目录
 
 - [Evt-Bus](#evt-bus)
-  - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-  - [Usage](#usage)
-  - [Features](#features)
-    - [Channel options](#channel-options)
-    - [Async emitter](#async-emitter)
-    - [Propagation stop \& return](#propagation-stop--return)
-    - [Handler sorting](#handler-sorting)
-    - [Handler group off](#handler-group-off)
-    - [Avoid repeat subscribe](#avoid-repeat-subscribe)
-    - [Handle exception](#handle-exception)
-    - [String message](#string-message)
-  - [Advanced details](#advanced-details)
-    - [Methods: on, off, offAll](#methods-on-off-offall)
-    - [Check subscribe exist](#check-subscribe-exist)
-    - [Debug tons of events](#debug-tons-of-events)
+  - [目录](#目录)
+  - [快捷指南](#快捷指南)
+  - [使用方式](#使用方式)
+  - [功能特性](#功能特性)
+    - [事件频道参数](#事件频道参数)
+    - [异步事件](#异步事件)
+    - [终止事件冒泡循环, 返回值](#终止事件冒泡循环-返回值)
+    - [事件响应排序](#事件响应排序)
+    - [事件响应按组取消监听](#事件响应按组取消监听)
+    - [防止重复监听](#防止重复监听)
+    - [异常处理](#异常处理)
+    - [字符串消息](#字符串消息)
+  - [更多细节](#更多细节)
+    - [事件方法: on, off, offAll](#事件方法-on-off-offall)
+    - [检查是否存在监听](#检查是否存在监听)
+    - [调试大量事件](#调试大量事件)
 
-## Quick Start
+## 快捷指南
 
-**Step 1**: This project uses [node](http://nodejs.org) and [npm](https://npmjs.com) to install.
+**Step 1**: 本项目使用 [node](http://nodejs.org) 和 [npm](https://npmjs.com) 来安装.
 
 ```sh
 $ npm install --save @haelue/evt-bus
 ```
 
-**Step 2**: Create a **Channel-File**: src/events/index.ts (OR anywhere)
+**Step 2**: 创建一个 **事件频道文件**: src/events/index.ts (或任意位置)
 
 ```typescript
 /** file: src/events/index.ts */
@@ -91,9 +91,9 @@ export default function evt(
 }
 ```
 
-> Tip: It can both use in **Browser.js** OR **Node.js**; With both **esm**, **cjs** OR **umd**.
+> 提示: 本工具可以同时用在 **Browser.js** 和 **Node.js**; JS 模式可以是 **esm**, **cjs** 和 **umd**.
 
-**Step 3**: Insert types in **Global-Declare-File**: src/global.d.ts (create one if non-exist)
+**Step 3**: 在 **全局声明文件** 中添加声明: src/global.d.ts (如果不存在可以创建一个)
 
 ```typescript
 /** file: src/global.d.ts */
@@ -104,7 +104,7 @@ declare type EvtRepeatable = import("@haelue/evt-bus").EvtRepeatable;
 declare type EvtMessage = import("@haelue/evt-bus").EvtMessage;
 ```
 
-**Step 4**: Create an **Event-Declare-File**: src/events/evt.d.ts (OR anywhere, but ends with **evt.d.ts / emit.d.ts**)
+**Step 4**: 创建一个 **事件声明文件**: src/events/evt.d.ts (或任意位置, 但必须以 **evt.d.ts / emit.d.ts** 结尾)
 
 ```typescript
 /** file: src/events/evt.d.ts */
@@ -115,17 +115,17 @@ declare interface EvtEmitDictionary {
 }
 ```
 
-> Tip: Return type must be: **boolean**.
+> 提示: 返回类型必须是: **boolean**.
 
-**Step 5**: Run command below: (recommand insert it into **package.json**)
+**Step 5**: 执行以下命令行命令: (建议将命令加到 **package.json** 中)
 
 ```sh
 $ npx evt-autogen
 ```
 
-Other declares will generate in your **Event-Declare-File (Step4)**. (see what happens in src/events/evt.d.ts)
+其他声明代码会自动生成在你的 **事件声明文件 (Step4)**. (看看发生了什么: src/events/evt.d.ts)
 
-**Step 6**: Use the event "fooTrigger":
+**Step 6**: 使用事件 "fooTrigger":
 
 ```typescript
 /** file: path/to/your/code.ts */
@@ -150,24 +150,24 @@ emit.fooTrigger({ id: "foo2", score: 2, time: new Date() });
 // [nothing as expected]
 ```
 
-> Tip: `evt()` provides the same cached instance in different file.
+> 提示: `evt()` 无论在哪个文件调用, 都会提供同一个缓存的对象实例.
 
-## Usage
+## 使用方式
 
-The usage mode of evt-bus can be very flexible.
+Evt-bus 的使用模式非常灵活.
 
-You can create many **Event-Declare-File (Step4)** in different modules, **evt-autogen** scan path **./src** recursive.
+你可以在不同的模块目录创建很多个 **事件声明文件 (Step4)**, **evt-autogen** 会递归扫描 **./src** 及其子目录.
 
-You can use -p to change scan path.
+你可以使用 -p 来修改扫描路径.
 
 ```sh
 $ npx evt-autogen -P [path/to/declare/files/root]
 # "-p -path -PATH" is also ok
 ```
 
-You can use `export interface` instead of `declare interface` in **Event-Declare-File (Step4)**, and make the filename ends with **evt.ts / emit.ts** (without ".d."), and import symbols in **Channel-File (Step2)**.
+你可以在 **事件声明文件 (Step4)** 中把 `export interface` 替换成 `declare interface`, 把文件名尾部替换为 **evt.ts / emit.ts** (没有 ".d."), 并将相关的符号 import 到 **事件频道文件 (Step2)**.
 
-The first **"e" argument** in on-handler is like: `{ message: "fooTrigger", cancel: false }`, you can use `e.cancel = true` to stop event propagation. But if you don't need this feature, and hate the first **"e" argument**, directions below would help:
+on 处理函数的第一个 **参数 "e"** 类似: `{ message: "fooTrigger", cancel: false }`, 你可以设置 `e.cancel = true` 来终止事件冒泡循环. 但如果你不需要这个特性, 也不喜欢第一个 **参数 "e"**, 可以通过下面的方式改造:
 
 ```typescript
 /** file: src/events/index.ts */
@@ -185,9 +185,9 @@ $ npx evt-autogen -S
 # "-s -simple -SIMPLE" is also ok
 ```
 
-## Features
+## 功能特性
 
-### Channel options
+### 事件频道参数
 
 ```typescript
 import evt from "src/events";
@@ -201,7 +201,7 @@ const { emit, on, off } = evt({
 });
 ```
 
-### Async emitter
+### 异步事件
 
 ```typescript
 import evt from "src/events";
@@ -214,7 +214,7 @@ on.fooTrigger(async (e, bar: { id: string; score: number; time: Date }) => {
 await emitAsync.fooTrigger({ id: "foo", score: 1, time: new Date() });
 ```
 
-### Propagation stop & return
+### 终止事件冒泡循环, 返回值
 
 ```typescript
 import evt from "src/events";
@@ -235,9 +235,9 @@ console.log(`result: ${result}, flag changed: ${changeFlag}`);
 // result: false, flag changed: false
 ```
 
-### Handler sorting
+### 事件响应排序
 
-The default sort-order is **0**, you can change it in channel-building, OR in on-method.
+默认的响应顺序号为 **0**, 你可以在事件频道构造, 或在事件监听的 on 方法中修改它.
 
 ```typescript
 import evt from "src/events";
@@ -269,9 +269,9 @@ emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 // event received: Order 3
 ```
 
-### Handler group off
+### 事件响应按组取消监听
 
-The default group name is **"\*"**, you can change it in channel-building, OR in on-method.
+默认的组名为 **"\*"**, 你可以在事件频道构造, 或在事件监听的 on 方法中修改它.
 
 ```typescript
 import evt from "src/events";
@@ -286,9 +286,9 @@ on.eventBar((e, bar: string, tick: number) => {}, "group-2");
 offAll("group-2");
 ```
 
-### Avoid repeat subscribe
+### 防止重复监听
 
-The default setting is **avoid-repeat**, you can change to **allow-repeat** in channel-building, OR in on-method.
+默认设置为 **禁止重复监听**, 你可以在事件频道构造, 或在事件监听的 on 方法中将它改为 **允许重复监听**.
 
 ```typescript
 import evt from "src/events";
@@ -317,9 +317,9 @@ emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 // event received in handler2
 ```
 
-### Handle exception
+### 异常处理
 
-The default handler is **console.error**, you can change it in channel-building, OR using withExceptionHandler-method.
+默认异常处理方法为 **console.error**, 你可以在事件频道构造, 或通过 withExceptionHandler 方法中修改它.
 
 ```typescript
 import evt from "src/events";
@@ -347,11 +347,11 @@ withExceptionHandler(avoidErrorLog).emit.fooTrigger({
 // [nothing as expected]
 ```
 
-> Tip: If event-handler is async, use async emitter.
+> 提示: 如果异常处理方法是异步的, 也请使用异步事件发送.
 
-### String message
+### 字符串消息
 
-String-message is also supported like a typical event bus.
+Evt-bus 同时支持类似传统经典事件总线的 字符串消息.
 
 ```typescript
 import evt from "src/events";
@@ -366,15 +366,15 @@ emit("fooTrigger", { id: "foo", score: 1, time: new Date() });
 off("fooTrigger");
 ```
 
-> Tip: And it is also compatible to declare-type usage.
+> 提示: 字符串消息还同时兼容定义类型的事件.
 
-## Advanced details
+## 更多细节
 
-Advanced details that you may not use, but needs to be mentioned.
+一些你可能用不到, 但需要说明的细节.
 
-### Methods: on, off, offAll
+### 事件方法: on, off, offAll
 
-See the declares of methods: on, off, offAll:
+先看看这几个事件方法的声明: on, off, offAll:
 
 ```typescript
 interface onMethods {
@@ -388,13 +388,13 @@ interface offAllMethod {
 }
 ```
 
-In on-method, if you ommit any parameter OR put `undefined`, the parameter will get **default value**.
+在 on 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这个参数会得到其 **默认值**.
 
-But in off(All)-method, if you ommit any parameter OR put `undefined`, it means **this "Parameter-Match-Condition" will be ignored** while searching to unsubscribe.
+但在 off(All) 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这表示你会在搜索需要取消监听的函数时,  忽略 **该参数的匹配条件**.
 
-### Check subscribe exist
+### 检查是否存在监听
 
-Use exist-method to see if there is subscribe on some event.
+使用 exist 方法来检查事件是否存在监听.
 
 ```typescript
 import evt from "src/events";
@@ -404,7 +404,7 @@ on.fooTrigger((e, bar: { id: string; score: number; time: Date }) => {
   console.log(`event received! ${JSON.stringify(bar)}`);
 });
 
-console.log("fooTrigger event subscribed: ", exist.fooTrigger());
+consetails that you may not use, but needs to be mentionedole.log("fooTrigger event subscribed: ", exist.fooTrigger());
 
 // console print:
 // fooTrigger event subscribed: true
@@ -417,9 +417,9 @@ console.log("fooTrigger event subscribed: ", exist.fooTrigger());
 // fooTrigger event subscribed: false
 ```
 
-### Debug tons of events
+### 调试大量事件
 
-In a badly structed project, tons of events may interweaving here and there. A debug tool is designed to analyze them. Example of vue3 web project as belows:
+在一个架构不太好的项目中, 大量事件到处交互穿插. evt-bus 设计了一个工具来进行调试. 下面是一个 vue3 前端项目的例子:
 
 ```typescript
 /** file: main.ts */
@@ -429,4 +429,4 @@ import { loadEvtDebug } from "@haelue/evt-bus";
 loadEvtDebug(false, nextTick, ["mouseMoving", "keyboardPressing"]);
 ```
 
-Run the web project, open the browser console, input `evtDebug()` and see what outputs.
+启动这个项目, 打开浏览器控制台, 输入 `evtDebug()` 看看会输出什么.
