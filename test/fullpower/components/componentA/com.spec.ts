@@ -20,10 +20,14 @@ describe("Evt-bus test (componentA)", () => {
 
     let changeFlag = false;
 
-    on.fooTrigger((e, bar) => e.cancel = true);
-    on.fooTrigger((e, bar) => changeFlag = true);
+    on.fooTrigger((e, bar) => (e.cancel = true));
+    on.fooTrigger((e, bar) => (changeFlag = true));
 
-    const emitResult = emit.fooTrigger({ id: "foo", score: 1.0, time: new Date() });
+    const emitResult = emit.fooTrigger({
+      id: "foo",
+      score: 1.0,
+      time: new Date(),
+    });
 
     strictEqual(changeFlag, false);
     strictEqual(emitResult, false);
@@ -35,16 +39,20 @@ describe("Evt-bus test (componentA)", () => {
     let changeFlag = false;
 
     on.fooTrigger((e, bar) => {
-      return new Promise<void>(resolve => {
+      return new Promise<void>((resolve) => {
         setTimeout(() => {
           e.cancel = true;
           resolve();
         }, 10);
-      })
+      });
     });
-    on.fooTrigger((e, bar) => changeFlag = true);
+    on.fooTrigger((e, bar) => (changeFlag = true));
 
-    const emitResult = await emitAsync.fooTrigger({ id: "foo", score: 1.0, time: new Date() });
+    const emitResult = await emitAsync.fooTrigger({
+      id: "foo",
+      score: 1.0,
+      time: new Date(),
+    });
 
     strictEqual(changeFlag, false);
     strictEqual(emitResult, false);

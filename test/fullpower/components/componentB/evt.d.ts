@@ -16,16 +16,34 @@ declare interface EvtEmitAsyncDictionary {
 
 declare interface EvtOnOffDictionary {
   /** example emitter with type infer */
-  barTrigger(cb?: (e: EvtMessage, id: string, score: number, time: Date) => void, gp?: EvtGroupName, order?: EvtOrder, repeatable?: EvtRepeatable): void;
+  barTrigger(
+    cb?: (e: EvtMessage, id: string, score: number, time: Date) => void,
+    gp?: EvtGroupName,
+    order?: EvtOrder,
+    repeatable?: EvtRepeatable,
+  ): void;
 
   /** Baz triggered with type infer */
-  bazTrigger(cb?: (e: EvtMessage, id: string, ...scores: number[]) => void, gp?: EvtGroupName, order?: EvtOrder, repeatable?: EvtRepeatable): void;
+  bazTrigger(
+    cb?: (e: EvtMessage, id: string, ...scores: number[]) => void,
+    gp?: EvtGroupName,
+    order?: EvtOrder,
+    repeatable?: EvtRepeatable,
+  ): void;
 }
 
 declare interface EvtOnCountDictionary {
   /** example emitter with type infer */
-  barTrigger(cb?: (e: EvtMessage, id: string, score: number, time: Date) => void, gp?: EvtGroupName, order?: EvtOrder): number;
+  barTrigger(
+    cb?: (e: EvtMessage, id: string, score: number, time: Date) => void,
+    gp?: EvtGroupName,
+    order?: EvtOrder,
+  ): number;
 
   /** Baz triggered with type infer */
-  bazTrigger(cb?: (e: EvtMessage, id: string, ...scores: number[]) => void, gp?: EvtGroupName, order?: EvtOrder): number;
+  bazTrigger(
+    cb?: (e: EvtMessage, id: string, ...scores: number[]) => void,
+    gp?: EvtGroupName,
+    order?: EvtOrder,
+  ): number;
 }

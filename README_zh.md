@@ -1,22 +1,23 @@
 language: **[English](README.md) | 中文**
 
 <p align="center">
-  <img src="logo.svg" width="640" height="320" alt="mitt">
+  <img src="logo.svg" width="640" height="320" alt="evt-bus">
 </p>
 
-# Evt-Bus
+# Evt-Bus &middot; [![npm](https://badgen.net/npm/v/@haelue/evt-bus)](https://npmjs.com/package/@haelue/evt-bus)
 
 > 一个超强大的 JS/TS 事件总线工具, 包含如下特性:
 
-- **类型推断:** 支持 typescript, 你可以在类型推断的支持下, 像调用方法一样使用事件
-- **异步事件:** 支持异步回调, 通过 Promise 或 async-await 的方式发送事件
-- **冒泡终止:** 你可以终止事件冒泡循环
-- **响应排序:** 指定一个 order 值来对事件响应进行排序
-- **按组取消监听:** 指定一个 group-id 值, 并在取消监听时按组取消
+- 🔑 **类型推断:** 支持 typescript, 你可以在类型推断的支持下, 像调用方法一样使用事件
+- 📦 **异步事件:** 支持异步回调, 通过 Promise 或 async-await 的方式发送事件
+- 🧡 **冒泡终止:** 你可以终止事件冒泡循环
+- 🔌 **监听响应排序:** 指定一个 order 值来对事件响应进行排序
+- ⛰️ **按组取消监听:** 指定一个 group-id 值, 并在取消监听时按组取消
+- ⚙️ **设置重复监听:** 可按需设置允许或禁止重复监听
 
 ## 目录
 
-- [Evt-Bus](#evt-bus)
+- [Evt-Bus · ](#evt-bus--)
   - [目录](#目录)
   - [快捷指南](#快捷指南)
   - [使用方式](#使用方式)
@@ -29,20 +30,31 @@ language: **[English](README.md) | 中文**
     - [防止重复监听](#防止重复监听)
     - [异常处理](#异常处理)
     - [字符串消息](#字符串消息)
-  - [更多细节](#更多细节)
-    - [事件方法: on, off, offAll](#事件方法-on-off-offall)
+  - [更多功能和细节](#更多功能和细节)
     - [获取监听数量](#获取监听数量)
+    - [事件方法: on, off, offAll, onCount](#事件方法-on-off-offall-oncount)
     - [调试大量事件](#调试大量事件)
 
 ## 快捷指南
 
-**Step 1**: 本项目使用 [node](http://nodejs.org) 和 [npm](https://npmjs.com) 来安装.
+**Step1**: 本项目使用 [node](http://nodejs.org) 和 [npm](https://npmjs.com) 来安装.
 
 ```sh
 $ npm install --save @haelue/evt-bus
 ```
 
-**Step 2**: 创建一个 **事件频道文件**: src/events/index.ts (或任意位置)
+**Step2**: 在 **全局声明文件** 中添加声明: src/global.d.ts (如果不存在可以创建一个)
+
+```typescript
+/** file: src/global.d.ts */
+
+declare type EvtGroupName = import("@haelue/evt-bus").EvtGroupName;
+declare type EvtOrder = import("@haelue/evt-bus").EvtOrder;
+declare type EvtRepeatable = import("@haelue/evt-bus").EvtRepeatable;
+declare type EvtMessage = import("@haelue/evt-bus").EvtMessage;
+```
+
+**Step3**: 创建一个 **事件频道文件**: src/events/index.ts (或任意位置)
 
 ```typescript
 /** file: src/events/index.ts */
@@ -81,12 +93,15 @@ interface UserEvtChannel {
   onCount: EvtOnCountMethod & EvtOnCountDictionary;
 
   /** Set exception-handler once for next emit */
-  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary, EvtEmitAsyncDictionary>;
+  withExceptionHandler: EvtWithExceptionHandlerMethod<
+    EvtEmitDictionary,
+    EvtEmitAsyncDictionary
+  >;
 }
 
 export const channelCached: Record<EvtChannelName, any> = {};
 
-/** Get an event-channel of channel-name (caching). */
+/** Get an event-channel of options (caching). */
 export default function evt(
   options?: Partial<EvtChannelOptions>,
 ): UserEvtChannel {
@@ -97,18 +112,7 @@ export default function evt(
 
 > 提示: 本工具可以同时用在 **Browser.js** 和 **Node.js**; JS 模式可以是 **esm**, **cjs** 和 **umd**.
 
-**Step 3**: 在 **全局声明文件** 中添加声明: src/global.d.ts (如果不存在可以创建一个)
-
-```typescript
-/** file: src/global.d.ts */
-
-declare type EvtGroupName = import("@haelue/evt-bus").EvtGroupName;
-declare type EvtOrder = import("@haelue/evt-bus").EvtOrder;
-declare type EvtRepeatable = import("@haelue/evt-bus").EvtRepeatable;
-declare type EvtMessage = import("@haelue/evt-bus").EvtMessage;
-```
-
-**Step 4**: 创建一个 **事件声明文件**: src/events/evt.d.ts (或任意位置, 但必须以 **evt.d.ts / emit.d.ts** 结尾)
+**Step4**: 创建一个 **事件声明文件**: src/events/evt.d.ts (或任意位置, 但必须以 **evt.d.ts / emit.d.ts** 结尾)
 
 ```typescript
 /** file: src/events/evt.d.ts */
@@ -121,7 +125,7 @@ declare interface EvtEmitDictionary {
 
 > 提示: 返回类型必须是: **boolean**.
 
-**Step 5**: 执行以下命令行命令: (建议将命令加到 **package.json** 中)
+**Step5**: 执行以下命令行命令: (建议将命令加到 **package.json** 中)
 
 ```sh
 $ npx evt-autogen
@@ -129,7 +133,7 @@ $ npx evt-autogen
 
 其他声明代码会自动生成在你的 **事件声明文件 (Step4)**. (看看发生了什么: src/events/evt.d.ts)
 
-**Step 6**: 使用事件 "fooTrigger":
+**Step6**: 使用事件 "fooTrigger":
 
 ```typescript
 /** file: path/to/your/code.ts */
@@ -169,7 +173,7 @@ $ npx evt-autogen -P [path/to/declare/files/root]
 # "-p -path -PATH" is also ok
 ```
 
-你可以在 **事件声明文件 (Step4)** 中把 `export interface` 替换成 `declare interface`, 把文件名尾部替换为 **evt.ts / emit.ts** (没有 ".d."), 并将相关的符号 import 到 **事件频道文件 (Step2)**.
+你可以在 **事件声明文件 (Step4)** 中把 `export interface` 替换成 `declare interface`, 把文件名尾部替换为 **evt.ts / emit.ts** (没有 ".d."), 并将相关的符号 import 到 **事件频道文件 (Step3)**.
 
 on 处理函数的第一个 **参数 "e"** 类似: `{ message: "fooTrigger", cancel: false }`, 你可以设置 `e.cancel = true` 来终止事件冒泡循环. 但如果你不需要这个特性, 也不喜欢第一个 **参数 "e"**, 可以通过下面的方式改造:
 
@@ -179,7 +183,6 @@ on 处理函数的第一个 **参数 "e"** 类似: `{ message: "fooTrigger", can
 import {
 --- EvtChannel,
 +++ EvtChannelSimple as EvtChannel,
-...
 ...
 } from "@haelue/evt-bus"
 ```
@@ -268,14 +271,14 @@ on.fooTrigger(
 emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 
 // console print:
-// event received: Order 1
-// event received: Order 2 (default)
 // event received: Order 3
+// event received: Order 2 (default)
+// event received: Order 1
 ```
 
 ### 事件响应按组取消监听
 
-默认的组名为 **"\*"**, 你可以在事件频道构造, 或在事件监听的 on 方法中修改它.
+默认的组名为 **\***, 你可以在事件频道构造, 或在事件监听的 on 方法中修改它.
 
 ```typescript
 import evt from "src/events";
@@ -374,29 +377,9 @@ off("fooTrigger");
 
 > 提示: 字符串消息还同时兼容定义类型的事件.
 
-## 更多细节
+## 更多功能和细节
 
-一些你可能用不到, 但需要说明的细节.
-
-### 事件方法: on, off, offAll
-
-先看看这几个事件方法的声明: on, off, offAll:
-
-```typescript
-interface onMethods {
-  fooEvent(handler, groupId?, sortOrder?, repeatable?): void;
-}
-interface offMethods {
-  fooEvent(handler?, groupId?, sortOrder?): void;
-}
-interface offAllMethod {
-  (groupId?, sortOrder?): void;
-}
-```
-
-在 on 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这个参数会得到其 **默认值**.
-
-但在 off(All) 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这表示你会在搜索需要取消监听的函数时, 忽略 **该参数的匹配条件**.
+一些你可能用不到, 但需要说明的功能和细节.
 
 ### 获取监听数量
 
@@ -426,9 +409,32 @@ console.log("fooTrigger event subscribe count： ", onCount.fooTrigger());
 // fooTrigger event subscribe count: 0
 ```
 
+### 事件方法: on, off, offAll, onCount
+
+先看看这几个事件方法的声明: on, off, offAll, onCount:
+
+```typescript
+interface onMethods {
+  fooTrigger(handler, groupId?, sortOrder?, repeatable?): void;
+}
+interface offMethods {
+  fooTrigger(handler?, groupId?, sortOrder?): void;
+}
+interface offAllMethod {
+  (groupId?, sortOrder?): void;
+}
+interface onCountMethods {
+  fooTrigger(handler?, groupId?, sortOrder?): number;
+}
+```
+
+在 on 方法中, 如果你省略了参数 或 传入 `undefined` 值, 这个参数会得到其 **默认值**.
+
+但在 off / offAll / onCount 方法中, 如果你省略了参数 或 传入 `undefined` 值, 这表示在搜索符合条件的监听时, 会忽略 **该参数的匹配条件**.
+
 ### 调试大量事件
 
-在一个架构不太好的项目中, 大量事件到处交互穿插. evt-bus 设计了一个工具来进行调试. 下面是一个 vue3 前端项目的例子:
+在一个架构不太好的项目中, 大量事件到处穿插交互. evt-bus 设计了一个工具来进行调试. 下面是一个 vue3 前端项目的例子:
 
 ```typescript
 /** file: main.ts */

@@ -1,22 +1,23 @@
 language: **English | [中文](README_zh.md)**
 
 <p align="center">
-  <img src="logo.svg" width="640" height="320" alt="mitt">
+  <img src="logo.svg" width="640" height="320" alt="evt-bus">
 </p>
 
-# Evt-Bus
+# Evt-Bus &middot; [![npm](https://badgen.net/npm/v/@haelue/evt-bus)](https://npmjs.com/package/@haelue/evt-bus)
 
 > An event bus tool with powerful features:
 
-- **Type inferring:** support typescript, you can use the event bus like calling functions with type inferring
-- **Async emitter:** define async handler, and emit it using Promise OR async-await
-- **Propagation stop:** stop event propagation in handler-loop
-- **Handler sorting:** sort the handlers with order-index
-- **Handler group off:** subscribe events with group-id, and unsubscribe them by group
+- 🔑 **Type inferring:** support typescript, you can use the event bus like calling functions with type inferring
+- 📦 **Async emitter:** define async handler, and emit using Promise OR async-await
+- 🧡 **Propagation stop:** stop event propagation in handler-loop
+- 🔌 **Handlers sorting:** sort the handlers with order-index
+- ⛰️ **Handlers group off:** subscribe events with group-id, and unsubscribe them by group
+- ⚙️ **Subscribe repeating:** optional "allow/avoid repeat" subscribe
 
 ## Table of Contents
 
-- [Evt-Bus](#evt-bus)
+- [Evt-Bus · ](#evt-bus--)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
   - [Usage](#usage)
@@ -24,25 +25,36 @@ language: **English | [中文](README_zh.md)**
     - [Channel options](#channel-options)
     - [Async emitter](#async-emitter)
     - [Propagation stop \& return](#propagation-stop--return)
-    - [Handler sorting](#handler-sorting)
-    - [Handler group off](#handler-group-off)
-    - [Avoid repeat subscribe](#avoid-repeat-subscribe)
+    - [Handlers sorting](#handlers-sorting)
+    - [Handlers group off](#handlers-group-off)
+    - [Avoid/allow repeat subscribe](#avoidallow-repeat-subscribe)
     - [Handle exception](#handle-exception)
     - [String message](#string-message)
   - [Advanced details](#advanced-details)
-    - [Methods: on, off, offAll](#methods-on-off-offall)
-    - [Count subscribe handlers](#count-subscribe-handlers)
+    - [Count listeners](#count-listeners)
+    - [Methods: on, off, offAll, onCount](#methods-on-off-offall-oncount)
     - [Debug tons of events](#debug-tons-of-events)
 
 ## Quick Start
 
-**Step 1**: This project uses [node](http://nodejs.org) and [npm](https://npmjs.com) to install.
+**Step1**: This project uses [node](http://nodejs.org) and [npm](https://npmjs.com) to install.
 
 ```sh
 $ npm install --save @haelue/evt-bus
 ```
 
-**Step 2**: Create a **Channel-File**: src/events/index.ts (OR anywhere)
+**Step2**: Insert types in **Global-Declare-File**: src/global.d.ts (create one if non-exist)
+
+```typescript
+/** file: src/global.d.ts */
+
+declare type EvtGroupName = import("@haelue/evt-bus").EvtGroupName;
+declare type EvtOrder = import("@haelue/evt-bus").EvtOrder;
+declare type EvtRepeatable = import("@haelue/evt-bus").EvtRepeatable;
+declare type EvtMessage = import("@haelue/evt-bus").EvtMessage;
+```
+
+**Step3**: Create a **Channel-File**: src/events/index.ts (OR anywhere)
 
 ```typescript
 /** file: src/events/index.ts */
@@ -81,12 +93,15 @@ interface UserEvtChannel {
   onCount: EvtOnCountMethod & EvtOnCountDictionary;
 
   /** Set exception-handler once for next emit */
-  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary, EvtEmitAsyncDictionary>;
+  withExceptionHandler: EvtWithExceptionHandlerMethod<
+    EvtEmitDictionary,
+    EvtEmitAsyncDictionary
+  >;
 }
 
 export const channelCached: Record<EvtChannelName, any> = {};
 
-/** Get an event-channel of channel-name (caching). */
+/** Get an event-channel of options (caching). */
 export default function evt(
   options?: Partial<EvtChannelOptions>,
 ): UserEvtChannel {
@@ -97,18 +112,7 @@ export default function evt(
 
 > Tip: It can both use in **Browser.js** OR **Node.js**; With both **esm**, **cjs** OR **umd**.
 
-**Step 3**: Insert types in **Global-Declare-File**: src/global.d.ts (create one if non-exist)
-
-```typescript
-/** file: src/global.d.ts */
-
-declare type EvtGroupName = import("@haelue/evt-bus").EvtGroupName;
-declare type EvtOrder = import("@haelue/evt-bus").EvtOrder;
-declare type EvtRepeatable = import("@haelue/evt-bus").EvtRepeatable;
-declare type EvtMessage = import("@haelue/evt-bus").EvtMessage;
-```
-
-**Step 4**: Create an **Event-Declare-File**: src/events/evt.d.ts (OR anywhere, but ends with **evt.d.ts / emit.d.ts**)
+**Step4**: Create an **Event-Declare-File**: src/events/evt.d.ts (OR anywhere, but ends with **evt.d.ts / emit.d.ts**)
 
 ```typescript
 /** file: src/events/evt.d.ts */
@@ -121,7 +125,7 @@ declare interface EvtEmitDictionary {
 
 > Tip: Return type must be: **boolean**.
 
-**Step 5**: Run command below: (recommand insert it into **package.json**)
+**Step5**: Run command below: (recommand insert into **package.json**)
 
 ```sh
 $ npx evt-autogen
@@ -129,7 +133,7 @@ $ npx evt-autogen
 
 Other declares will generate in your **Event-Declare-File (Step4)**. (see what happens in src/events/evt.d.ts)
 
-**Step 6**: Use the event "fooTrigger":
+**Step6**: Use the event "fooTrigger":
 
 ```typescript
 /** file: path/to/your/code.ts */
@@ -169,7 +173,7 @@ $ npx evt-autogen -P [path/to/declare/files/root]
 # "-p -path -PATH" is also ok
 ```
 
-You can use `export interface` instead of `declare interface` in **Event-Declare-File (Step4)**, and make the filename ends with **evt.ts / emit.ts** (without ".d."), and import symbols in **Channel-File (Step2)**.
+You can use `export interface` instead of `declare interface` in **Event-Declare-File (Step4)**, and make the filename ends with **evt.ts / emit.ts** (without ".d."), and import symbols in **Channel-File (Step3)**.
 
 The first **"e" argument** in on-handler is like: `{ message: "fooTrigger", cancel: false }`, you can use `e.cancel = true` to stop event propagation. But if you don't need this feature, and hate the first **"e" argument**, directions below would help:
 
@@ -179,7 +183,6 @@ The first **"e" argument** in on-handler is like: `{ message: "fooTrigger", canc
 import {
 --- EvtChannel,
 +++ EvtChannelSimple as EvtChannel,
-...
 ...
 } from "@haelue/evt-bus"
 ```
@@ -239,7 +242,7 @@ console.log(`result: ${result}, flag changed: ${changeFlag}`);
 // result: false, flag changed: false
 ```
 
-### Handler sorting
+### Handlers sorting
 
 The default sort-order is **0**, you can change it in channel-building, OR in on-method.
 
@@ -273,9 +276,9 @@ emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 // event received: Order 1
 ```
 
-### Handler group off
+### Handlers group off
 
-The default group name is **"\*"**, you can change it in channel-building, OR in on-method.
+The default group name is **\***, you can change it in channel-building, OR in on-method.
 
 ```typescript
 import evt from "src/events";
@@ -290,7 +293,7 @@ on.eventBar((e, bar: string, tick: number) => {}, "group-2");
 offAll("group-2");
 ```
 
-### Avoid repeat subscribe
+### Avoid/allow repeat subscribe
 
 The default setting is **avoid-repeat**, you can change to **allow-repeat** in channel-building, OR in on-method.
 
@@ -378,29 +381,9 @@ off("fooTrigger");
 
 Advanced details that you may not use, but needs to be mentioned.
 
-### Methods: on, off, offAll
+### Count listeners
 
-See the declares of methods: on, off, offAll:
-
-```typescript
-interface onMethods {
-  fooEvent(handler, groupId?, sortOrder?, repeatable?): void;
-}
-interface offMethods {
-  fooEvent(handler?, groupId?, sortOrder?): void;
-}
-interface offAllMethod {
-  (groupId?, sortOrder?): void;
-}
-```
-
-In on-method, if you ommit any parameter OR put `undefined`, the parameter will get **default value**.
-
-But in off(All)-method, if you ommit any parameter OR put `undefined`, it means **this "Parameter-Match-Condition" will be ignored** while searching to unsubscribe.
-
-### Count subscribe handlers
-
-Use onCount-method to count subscribe handlers.
+Use onCount-method to count subscribe listeners.
 
 ```typescript
 import evt from "src/events";
@@ -425,6 +408,29 @@ console.log("fooTrigger event subscribe count： ", onCount.fooTrigger());
 // console print:
 // fooTrigger event subscribe count: 0
 ```
+
+### Methods: on, off, offAll, onCount
+
+See the declares of methods: on, off, offAll, onCount:
+
+```typescript
+interface onMethods {
+  fooTrigger(handler, groupId?, sortOrder?, repeatable?): void;
+}
+interface offMethods {
+  fooTrigger(handler?, groupId?, sortOrder?): void;
+}
+interface offAllMethod {
+  (groupId?, sortOrder?): void;
+}
+interface onCountMethods {
+  fooTrigger(handler?, groupId?, sortOrder?): number;
+}
+```
+
+In on-method, if you ommit any parameter OR put `undefined`, the parameter will get **default value**.
+
+But in off / offAll / onCount -method, if you ommit any parameter OR put `undefined`, it means **this "Parameter-Match-Condition" will be ignored** while searching listeners.
 
 ### Debug tons of events
 
