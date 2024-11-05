@@ -1,8 +1,12 @@
 language: **English | [中文](README_zh.md)**
 
+<p align="center">
+  <img src="logo.svg" width="640" height="320" alt="mitt">
+</p>
+
 # Evt-Bus
 
-> An event bus framework with powerful features:
+> An event bus tool with powerful features:
 
 - **Type inferring:** support typescript, you can use the event bus like calling functions with type inferring
 - **Async emitter:** define async handler, and emit it using Promise OR async-await
@@ -27,7 +31,7 @@ language: **English | [中文](README_zh.md)**
     - [String message](#string-message)
   - [Advanced details](#advanced-details)
     - [Methods: on, off, offAll](#methods-on-off-offall)
-    - [Check subscribe exist](#check-subscribe-exist)
+    - [Count subscribe handlers](#count-subscribe-handlers)
     - [Debug tons of events](#debug-tons-of-events)
 
 ## Quick Start
@@ -49,7 +53,7 @@ import {
   EvtOnMethod,
   EvtOffMethod,
   EvtOffAllMethod,
-  EvtExistMethod,
+  EvtOnCountMethod,
   EvtEmitMethod,
   EvtEmitAsyncMethod,
   EvtWithExceptionHandlerMethod,
@@ -73,11 +77,11 @@ interface UserEvtChannel {
   /** Emit event (async) */
   emitAsync: EvtEmitAsyncMethod & EvtEmitAsyncDictionary;
 
-  /** Check if event-listenning exist */
-  exist: EvtExistMethod & EvtExistDictionary;
+  /** Count of event-listenning */
+  onCount: EvtOnCountMethod & EvtOnCountDictionary;
 
   /** Set exception-handler once for next emit */
-  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary>;
+  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary, EvtEmitAsyncDictionary>;
 }
 
 export const channelCached: Record<EvtChannelName, any> = {};
@@ -264,9 +268,9 @@ on.fooTrigger(
 emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 
 // console print:
-// event received: Order 1
-// event received: Order 2 (default)
 // event received: Order 3
+// event received: Order 2 (default)
+// event received: Order 1
 ```
 
 ### Handler group off
@@ -316,6 +320,8 @@ emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 // event received in handler1
 // event received in handler2
 ```
+
+> Tip: Each arrow-function creates different instance, which is not repeat
 
 ### Handle exception
 
@@ -392,29 +398,32 @@ In on-method, if you ommit any parameter OR put `undefined`, the parameter will 
 
 But in off(All)-method, if you ommit any parameter OR put `undefined`, it means **this "Parameter-Match-Condition" will be ignored** while searching to unsubscribe.
 
-### Check subscribe exist
+### Count subscribe handlers
 
-Use exist-method to see if there is subscribe on some event.
+Use onCount-method to count subscribe handlers.
 
 ```typescript
 import evt from "src/events";
-const { on, off, exist } = evt();
+const { on, off, onCount } = evt();
 
 on.fooTrigger((e, bar: { id: string; score: number; time: Date }) => {
   console.log(`event received! ${JSON.stringify(bar)}`);
 });
+on.fooTrigger((e, bar: { id: string; score: number; time: Date }) => {
+  console.log(`event received! ${JSON.stringify(bar)}`);
+});
 
-console.log("fooTrigger event subscribed: ", exist.fooTrigger());
+console.log("fooTrigger event subscribe count: ", onCount.fooTrigger());
 
 // console print:
-// fooTrigger event subscribed: true
+// fooTrigger event subscribe count: 2
 
 off.fooTrigger();
 
-console.log("fooTrigger event subscribed: ", exist.fooTrigger());
+console.log("fooTrigger event subscribe count： ", onCount.fooTrigger());
 
 // console print:
-// fooTrigger event subscribed: false
+// fooTrigger event subscribe count: 0
 ```
 
 ### Debug tons of events

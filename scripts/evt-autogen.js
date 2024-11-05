@@ -47,11 +47,6 @@ module.exports.writeFile = writeFile;
 
 const autogen_head = `/** Auto generate by evt-autogen.js! */`;
 
-const type_head = `declare type EvtGroupName = import("evt-bus").EvtGroupName;
-declare type EvtOrder = import("evt-bus").EvtOrder;
-declare type EvtRepeatable = import("evt-bus").EvtRepeatable;
-declare type EvtMessage = import("evt-bus").EvtMessage;`;
-
 function trimBlankLines(data) {
   let startLine = 0,
     endLine = data.length - 1;
@@ -95,7 +90,7 @@ function generateDefs(emitPath, needEventArg, generateInSameFile) {
 
     for (let i = main_lineno + 1; i < lines.length; i++) {
       const match = lines[i].match(
-        /\s*(export|declare)\s*interface\s*(EvtEmitAsyncDictionary|EvtOnOffDictionary|EvtExistDictionary)\s*\{/,
+        /\s*(export|declare)\s*interface\s*(EvtEmitAsyncDictionary|EvtOnOffDictionary|EvtOnCountDictionary)\s*\{/,
       );
       if (match) {
         lines = trimBlankLines(lines.slice(0, i));
@@ -110,7 +105,7 @@ function generateDefs(emitPath, needEventArg, generateInSameFile) {
     let out_onoff =
       (generateInSameFile ? "" : lines.slice(0, main_lineno).join("\n")) +
       `${main_symbol} interface EvtOnOffDictionary {`;
-    let out_exist = `${main_symbol} interface EvtExistDictionary {`;
+    let out_oncount = `${main_symbol} interface EvtOnCountDictionary {`;
 
     let lower_data = "\n" + lines.slice(main_lineno + 1).join("\n"),
       index = 0;
@@ -121,13 +116,13 @@ function generateDefs(emitPath, needEventArg, generateInSameFile) {
       if (!subtext) {
         out_emitasync += lower_data;
         out_onoff += lower_data;
-        out_exist += lower_data;
+        out_oncount += lower_data;
         break;
       }
       let uppper_temp = lower_data.substring(0, subtext.index);
       out_emitasync += uppper_temp;
       out_onoff += uppper_temp;
-      out_exist += uppper_temp;
+      out_oncount += uppper_temp;
 
       const space = subtext[2].toString();
       const name = subtext[3].toString();
@@ -139,7 +134,7 @@ function generateDefs(emitPath, needEventArg, generateInSameFile) {
         : args;
       out_emitasync += `${index === 0 && uppper_temp.trim() === "" ? "" : "\n"}${space}${name}(${args}): Promise<boolean>${tail}\n`;
       out_onoff += `${index === 0 && uppper_temp.trim() === "" ? "" : "\n"}${space}${name}(cb?: (${cbArgs}) => void, gp?: EvtGroupName, order?: EvtOrder, repeatable?: EvtRepeatable): void${tail}\n`;
-      out_exist += `${index === 0 && uppper_temp.trim() === "" ? "" : "\n"}${space}${name}(): boolean${tail}\n`;
+      out_oncount += `${index === 0 && uppper_temp.trim() === "" ? "" : "\n"}${space}${name}(cb?: (${cbArgs}) => void, gp?: EvtGroupName, order?: EvtOrder): number${tail}\n`;
       lower_data = lower_data.substring(subtext.index + subtext[0].length);
       index++;
     }
@@ -153,18 +148,15 @@ function generateDefs(emitPath, needEventArg, generateInSameFile) {
           "\n\n" +
           out_onoff +
           "\n\n" +
-          out_exist,
+          out_oncount,
       );
     } else {
-      const emitasyncPath = emitPath.replace(/\.emit\./, ".emitasync.");
-      const onoffPath = emitPath.replace(/\.emit\./, ".onoff.");
-      const existPath = emitPath.replace(/\.emit\./, ".exist.");
+      const emitasyncPath = emitPath.replace(/\bemit\./, "emitasync.");
+      const onoffPath = emitPath.replace(/\bemit\./, "onoff.");
+      const oncountPath = emitPath.replace(/\bemit\./, "oncount.");
       writeFile(emitasyncPath, autogen_head + "\n\n" + out_emitasync);
-      writeFile(
-        onoffPath,
-        autogen_head + "\n\n" + type_head + "\n\n" + out_onoff,
-      );
-      writeFile(existPath, autogen_head + "\n\n" + out_exist);
+      writeFile(onoffPath, autogen_head + "\n\n" + out_onoff);
+      writeFile(oncountPath, autogen_head + "\n\n" + out_oncount);
     }
   });
 }

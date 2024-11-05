@@ -1,0 +1,27 @@
+<svg width="640" height="320" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="svg_5" x1="0" y1="0" x2="0" y2="1" spreadMethod="pad">
+   <stop stop-color="#cc6611" offset="0"/>
+   <stop stop-color="#6611cc" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g>
+   <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+
+   <g>
+    <title>background</title>
+    <rect x="-1" y="-1" width="642" height="322" id="svg_4" fill="url(#svg_5)"/>
+    <g id="svg_3" width="100%" height="100%" x="0" y="0" overflow="visible" display="none">
+     <rect transform="translate(-2 -26) translate(-3 -92) translate(0 140)" width="100%" height="100%" x="0" y="0" stroke-width="0" fill="url(#gridpattern)"/>
+    </g>
+   </g>
+   <g>
+    <title>Layer 1</title>
+    <text fill="#ffffff" stroke-width="0" x="124.87001" y="101.90999" id="svg_2" font-size="24" font-family="Georgia, Times, 'Times New Roman', serif" text-anchor="start" xml:space="preserve" transform="matrix(4.58234 0 0 4.55231 -472.066 -291.386)" stroke="#000" font-weight="bold" font-style="normal">Evt-Bus</text>
+    <text fill="#ffffff" stroke-width="0" stroke-opacity="null" x="78.20064" y="225.10938" id="svg_1" font-size="24" font-family="'Courier New', Courier, monospace" text-anchor="start" xml:space="preserve" transform="matrix(1.08679 0 0 1 18.4498 0)" stroke="#000" font-style="normal">A powerful JS / TS Event-Bus</text>
+   </g>
+  </g>
+ </g>
+</svg>

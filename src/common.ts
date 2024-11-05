@@ -29,6 +29,7 @@ export type EvtChannelName = string;
  */
 export type EvtExceptionHandler = (error: any) => any;
 
+/** Event channel building options */
 export interface EvtChannelOptions {
   /** Default name */
   name: EvtChannelName;
@@ -75,13 +76,21 @@ export type EvtEmitAsyncMethod = (
   ...args: any
 ) => Promise<boolean>;
 
-/** Event exist-method */
-export type EvtExistMethod = (msg: EvtMessageName) => boolean;
+/** Event onCount-method */
+export type EvtOnCountMethod = (
+  msg: EvtMessageName,
+  cb?: EvtHandler | EvtHandlerWithEventArg,
+  gp?: EvtGroupName,
+  order?: EvtOrder,
+) => number;
 
-/** Event with-exception-handler-method */
-export type EvtWithExceptionHandlerMethod<T> = (
+/** Event withExceptionHandler-method */
+export type EvtWithExceptionHandlerMethod<T1, T2> = (
   exceptionHandler: EvtExceptionHandler,
-) => T;
+) => {
+  emit: EvtEmitMethod & T1;
+  emitAsync: EvtEmitAsyncMethod & T2;
+};
 
 export const evtDebug = {
   on: (

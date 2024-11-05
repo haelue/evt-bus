@@ -1,8 +1,12 @@
 language: **[English](README.md) | 中文**
 
+<p align="center">
+  <img src="logo.svg" width="640" height="320" alt="mitt">
+</p>
+
 # Evt-Bus
 
-> 一个 超强大的 事件总线 工具, 包含如下特性:
+> 一个超强大的 JS/TS 事件总线工具, 包含如下特性:
 
 - **类型推断:** 支持 typescript, 你可以在类型推断的支持下, 像调用方法一样使用事件
 - **异步事件:** 支持异步回调, 通过 Promise 或 async-await 的方式发送事件
@@ -27,7 +31,7 @@ language: **[English](README.md) | 中文**
     - [字符串消息](#字符串消息)
   - [更多细节](#更多细节)
     - [事件方法: on, off, offAll](#事件方法-on-off-offall)
-    - [检查是否存在监听](#检查是否存在监听)
+    - [获取监听数量](#获取监听数量)
     - [调试大量事件](#调试大量事件)
 
 ## 快捷指南
@@ -49,7 +53,7 @@ import {
   EvtOnMethod,
   EvtOffMethod,
   EvtOffAllMethod,
-  EvtExistMethod,
+  EvtOnCountMethod,
   EvtEmitMethod,
   EvtEmitAsyncMethod,
   EvtWithExceptionHandlerMethod,
@@ -73,11 +77,11 @@ interface UserEvtChannel {
   /** Emit event (async) */
   emitAsync: EvtEmitAsyncMethod & EvtEmitAsyncDictionary;
 
-  /** Check if event-listenning exist */
-  exist: EvtExistMethod & EvtExistDictionary;
+  /** Count of event-listenning */
+  onCount: EvtOnCountMethod & EvtOnCountDictionary;
 
   /** Set exception-handler once for next emit */
-  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary>;
+  withExceptionHandler: EvtWithExceptionHandlerMethod<EvtEmitDictionary, EvtEmitAsyncDictionary>;
 }
 
 export const channelCached: Record<EvtChannelName, any> = {};
@@ -317,6 +321,8 @@ emit.fooTrigger({ id: "foo", score: 1, time: new Date() });
 // event received in handler2
 ```
 
+> 提示: 每个箭头函数都是不同的实例，不算重复监听
+
 ### 异常处理
 
 默认异常处理方法为 **console.error**, 你可以在事件频道构造, 或通过 withExceptionHandler 方法中修改它.
@@ -390,31 +396,34 @@ interface offAllMethod {
 
 在 on 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这个参数会得到其 **默认值**.
 
-但在 off(All) 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这表示你会在搜索需要取消监听的函数时,  忽略 **该参数的匹配条件**.
+但在 off(All) 方法中, 如果你省略了参数 或 传了 `undefined` 值, 这表示你会在搜索需要取消监听的函数时, 忽略 **该参数的匹配条件**.
 
-### 检查是否存在监听
+### 获取监听数量
 
-使用 exist 方法来检查事件是否存在监听.
+使用 onCount 方法来获取事件监听数量.
 
 ```typescript
 import evt from "src/events";
-const { on, off, exist } = evt();
+const { on, off, onCount } = evt();
 
 on.fooTrigger((e, bar: { id: string; score: number; time: Date }) => {
   console.log(`event received! ${JSON.stringify(bar)}`);
 });
+on.fooTrigger((e, bar: { id: string; score: number; time: Date }) => {
+  console.log(`event received! ${JSON.stringify(bar)}`);
+});
 
-consetails that you may not use, but needs to be mentionedole.log("fooTrigger event subscribed: ", exist.fooTrigger());
+console.log("fooTrigger event subscribe count: ", onCount.fooTrigger());
 
 // console print:
-// fooTrigger event subscribed: true
+// fooTrigger event subscribe count: 2
 
 off.fooTrigger();
 
-console.log("fooTrigger event subscribed: ", exist.fooTrigger());
+console.log("fooTrigger event subscribe count： ", onCount.fooTrigger());
 
 // console print:
-// fooTrigger event subscribed: false
+// fooTrigger event subscribe count: 0
 ```
 
 ### 调试大量事件

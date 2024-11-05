@@ -20,9 +20,6 @@ export class EvtChannel {
   /** Error handler of exception caught at emit-handler-loop. */
   defaultExceptionHandler: EvtExceptionHandler;
 
-  /** use in withExceptionHandler() */
-  _oldExceptionHandler: EvtExceptionHandler | undefined = undefined;
-
   /** Default order */
   defaultOrder: EvtOrder;
 
@@ -38,7 +35,9 @@ export class EvtChannel {
   > = {};
 
   constructor(options: Partial<EvtChannelOptions> | undefined = undefined) {
-    const opt = options ? { ...evtDefaultOptions, options } : evtDefaultOptions;
+    const opt = options
+      ? { ...evtDefaultOptions, ...options }
+      : evtDefaultOptions;
     this.name = opt.name;
     this.defaultExceptionHandler = opt.defaultExceptionHandler;
     this.defaultGroup = opt.defaultGroup;
@@ -70,19 +69,18 @@ export class EvtChannel {
     listeners ??= ((this._evts[msg] = []), this._evts[msg]);
     gp ??= this.defaultGroup;
     order ??= this.defaultOrder;
-    let left = 0;
-    let right = listeners.length - 1;
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      if (listeners[mid][2] > order) left = mid + 1;
-      else if (listeners[mid][2] < order) right = mid - 1;
-      else {
-        left = mid;
-        break;
+    let low = 0;
+    let high = listeners.length;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (order <= listeners[mid][2]) {
+        low = mid + 1;
+      } else {
+        high = mid;
       }
     }
     evtDebug.on(msg, cb, gp, order, repeatable);
-    listeners.splice(left, 0, [cb, gp, order]);
+    listeners.splice(low, 0, [cb, gp, order]);
   }
 
   /** Remove event-listeners of message & handler (manually) */
@@ -120,7 +118,11 @@ export class EvtChannel {
   }
 
   /** Dispatch event (manually) */
-  dispatchEvent(msg: EvtMessageName, ...args: any[]): boolean {
+  _dispatchEvent(
+    exceptionHandler: EvtExceptionHandler,
+    msg: EvtMessageName,
+    ...args: any[]
+  ): boolean {
     let result = true;
     const e = { message: msg, cancel: false };
     for (let listener of this._evts[msg] || []) {
@@ -129,22 +131,23 @@ export class EvtChannel {
         listener[0](e, ...args);
       } catch (error) {
         evtDebug.exception(msg, listener[0], e, error);
-        this.defaultExceptionHandler(error);
+        exceptionHandler(error);
       }
       if (e.cancel) {
         result = false;
         break;
       }
     }
-    if (this._oldExceptionHandler) {
-      this.defaultExceptionHandler = this._oldExceptionHandler;
-      this._oldExceptionHandler = undefined;
-    }
     return result;
   }
 
+  dispatchEvent(msg: EvtMessageName, ...args: any[]): boolean {
+    return this._dispatchEvent(this.defaultExceptionHandler, msg, ...args);
+  }
+
   /** Dispatch event async (manually) */
-  async dispatchEventAsync(
+  async _dispatchEventAsync(
+    exceptionHandler: EvtExceptionHandler,
     msg: EvtMessageName,
     ...args: any
   ): Promise<boolean> {
@@ -156,23 +159,48 @@ export class EvtChannel {
         await listener[0](e, ...args);
       } catch (error) {
         evtDebug.exception(msg, listener[0], e, error);
-        await this.defaultExceptionHandler(error);
+        await exceptionHandler(error);
       }
       if (e.cancel) {
         result = false;
         break;
       }
     }
-    if (this._oldExceptionHandler) {
-      this.defaultExceptionHandler = this._oldExceptionHandler;
-      this._oldExceptionHandler = undefined;
-    }
     return result;
   }
 
-  /** Check if an event message exists (manually) */
-  existEventListener(msg: EvtMessageName): boolean {
-    return this._evts[msg]?.length > 0;
+  async dispatchEventAsync(
+    msg: EvtMessageName,
+    ...args: any
+  ): Promise<boolean> {
+    return await this._dispatchEventAsync(
+      this.defaultExceptionHandler,
+      msg,
+      ...args,
+    );
+  }
+
+  /** Count event-listeners (manually) */
+  countEventListener(
+    msg: EvtMessageName,
+    cb: EvtHandler | EvtHandlerWithEventArg | undefined = undefined,
+    gp: EvtGroupName | undefined = undefined,
+    order: EvtOrder | undefined = undefined,
+  ): number {
+    let count = 0;
+    const listeners = this._evts[msg];
+    if (listeners) {
+      for (let listener of listeners) {
+        if (
+          (cb === undefined || listener[0] === cb) &&
+          (gp === undefined || listener[1] === gp) &&
+          (order === undefined || listener[2] === order)
+        ) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   onMethodCached: { [x: string | symbol]: Function } = {};
@@ -241,29 +269,48 @@ export class EvtChannel {
     },
   });
 
-  existMethodCached: { [x: string | symbol]: Function } = {};
+  onCountMethodCached: { [x: string | symbol]: Function } = {};
 
-  exist = new Proxy(this.existEventListener.bind(this), {
+  onCount = new Proxy(this.countEventListener.bind(this), {
     get: (_target, prop) => {
       // return a function for emit event
       return (
-        this.existMethodCached[prop] ||
-        ((this.existMethodCached[prop] = this.existEventListener.bind(
+        this.onCountMethodCached[prop] ||
+        ((this.onCountMethodCached[prop] = this.countEventListener.bind(
           this,
           prop as EvtMessageName,
         )),
-        this.existMethodCached[prop])
+        this.onCountMethodCached[prop])
       );
     },
   });
 
   _withExceptionHandler(exceptionHandler: EvtExceptionHandler) {
-    if (typeof exceptionHandler !== "function") {
-      return this;
-    }
-    this._oldExceptionHandler = this.defaultExceptionHandler;
-    this.defaultExceptionHandler = exceptionHandler;
-    return this;
+    return {
+      emit: new Proxy(this._dispatchEvent.bind(this, exceptionHandler), {
+        get: (_target, prop) => {
+          // return a function for emit event
+          return this._dispatchEvent.bind(
+            this,
+            exceptionHandler,
+            prop as EvtMessageName,
+          );
+        },
+      }),
+      emitAsync: new Proxy(
+        this._dispatchEventAsync.bind(this, exceptionHandler),
+        {
+          get: (_target, prop) => {
+            // return a function for emit event
+            return this._dispatchEventAsync.bind(
+              this,
+              exceptionHandler,
+              prop as EvtMessageName,
+            );
+          },
+        },
+      ),
+    };
   }
 
   withExceptionHandler = this._withExceptionHandler.bind(this);

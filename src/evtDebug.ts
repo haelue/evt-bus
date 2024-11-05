@@ -9,9 +9,7 @@ import {
 } from "./common";
 
 declare global {
-  interface Window {
-    evtDebug: (...args: any) => void;
-  }
+  function evtDebug(): void;
 }
 
 const loadEvtDebug = (
@@ -90,7 +88,7 @@ const loadEvtDebug = (
   if (loadImmediately) {
     evtDebug.emit = evtDebugEmit;
   }
-  window["evtDebug"] = () => {
+  globalThis.evtDebug = () => {
     evtDebug.emit = evtDebug.emit === evtDebugEmit ? () => {} : evtDebugEmit;
   };
 };
