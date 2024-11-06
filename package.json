@@ -1,6 +1,6 @@
 {
   "name": "@haelue/evt-bus",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Event bus with powerful features: type inferring, async emitter, propagation stop, handler sorting, group off, etc.",
   "main": "dist/main/index.js",
   "module": "dist/main/index.mjs",
