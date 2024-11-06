@@ -1,0 +1,49 @@
+{
+  "name": "@haelue/evt-bus",
+  "version": "1.0.1",
+  "description": "Event bus with powerful features: type inferring, async emitter, propagation stop, handler sorting, group off, etc.",
+  "main": "dist/main/index.js",
+  "module": "dist/main/index.mjs",
+  "jsnext:main": "dist/main/index.mjs",
+  "umd:main": "dist/main/index.js",
+  "source": "src/index.ts",
+  "types": "dist/main/index.d.ts",
+  "typings": "dist/main/index.d.ts",
+  "repository": "haelue/evt-bus",
+  "homepage": "https://github.com/haelue/evt-bus",
+  "keywords": [
+    "events",
+    "eventemitter",
+    "emitter",
+    "eventdispatcher",
+    "eventlistener",
+    "pubsub",
+    "eventbus",
+    "mitt"
+  ],
+  "bin": {
+    "evt-autogen": "dist/scripts/evt-autogen"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "prettier": "npx prettier --write .",
+    "build": "rollup -c"
+  },
+  "author": "haelue",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@types/node": "^22.8.1",
+    "prettier": "^3.3.3",
+    "rollup": "^4.24.3",
+    "tslib": "^2.8.0",
+    "typescript": "^5.6.3"
+  }
+}
