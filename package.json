@@ -1,6 +1,6 @@
 {
   "name": "@haelue/evt-bus",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Event bus with powerful features: type inferring, async emitter, propagation stop, handler sorting, group off, etc.",
   "main": "dist/main/index.js",
   "module": "dist/main/index.mjs",
@@ -29,8 +29,8 @@
   },
   "scripts": {
     "prettier": "npx prettier --write .",
-    "build": "rollup -c",
-    "test": "mocha test/**/**.spec.ts "
+    "build": "rimraf dist & rollup -c",
+    "test": "mocha test/**/**.spec.ts"
   },
   "mocha": {
     "require": "ts-node/register"
@@ -49,6 +49,7 @@
     "assert": "^2.1.0",
     "mocha": "^10.8.2",
     "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
     "rollup": "^4.24.3",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.0",

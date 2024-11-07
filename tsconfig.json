@@ -5,7 +5,7 @@
     "declarationDir": "dist/main",
     "emitDeclarationOnly": true,
     "outDir": "dist/main",
-    "rootDir": ".",
+    "rootDir": "src",
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -15,6 +15,6 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "test/**/*.ts", "test/**/*.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
